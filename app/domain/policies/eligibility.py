@@ -1,19 +1,13 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Optional
 from app.domain.entities.profile import BusinessProfile
 
 class ConditionEvaluator:
-    """Evaluates question template preconditions against a BusinessProfile instance.
-    
-    Example precondition format:
-    {
-      "and": [
-        {"field": "business_type", "operator": "eq", "value": "Coaching Institute"},
-        {"field": "team_size", "operator": "gt", "value": 5}
-      ]
-    }
+    """Evaluates question template preconditions and opportunity rules against 
+    a BusinessProfile instance and optional BusinessContext facts.
     """
-    def __init__(self, profile: BusinessProfile):
+    def __init__(self, profile: BusinessProfile, context_facts: Optional[Dict[str, Any]] = None):
         self.profile = profile
+        self.context_facts = context_facts or {}
 
     def evaluate(self, condition: Union[Dict[str, Any], List[Dict[str, Any]], None]) -> bool:
         """Entry point for checking eligibility conditions."""
@@ -21,7 +15,6 @@ class ConditionEvaluator:
             return True
 
         if isinstance(condition, list):
-            # Implicit 'and' for list of raw conditions
             return all(self._evaluate_single(c) for c in condition)
 
         if "and" in condition:
@@ -43,31 +36,47 @@ class ConditionEvaluator:
         if not field:
             return True
 
-        # Resolve field value from profile
-        if not hasattr(self.profile, field):
+        # Resolve field value from profile or context facts
+        resolved = False
+        val = None
+
+        if hasattr(self.profile, field):
+            val = getattr(self.profile, field)
+            resolved = True
+        elif field in self.context_facts:
+            val = self.context_facts[field]
+            resolved = True
+
+        if not resolved:
             return False
 
-        profile_val = getattr(self.profile, field)
-
         if operator == "eq":
-            return profile_val == target_val
+            return val == target_val
         elif operator == "ne":
-            return profile_val != target_val
+            return val != target_val
         elif operator == "gt":
-            if profile_val is None or target_val is None:
+            if val is None or target_val is None:
                 return False
-            return profile_val > target_val
+            return val > target_val
+        elif operator == "gte":
+            if val is None or target_val is None:
+                return False
+            return val >= target_val
         elif operator == "lt":
-            if profile_val is None or target_val is None:
+            if val is None or target_val is None:
                 return False
-            return profile_val < target_val
+            return val < target_val
+        elif operator == "lte":
+            if val is None or target_val is None:
+                return False
+            return val <= target_val
         elif operator == "contains":
-            if not isinstance(profile_val, list):
+            if not isinstance(val, list):
                 return False
-            return target_val in profile_val
+            return target_val in val
         elif operator == "in":
             if not isinstance(target_val, list):
                 return False
-            return profile_val in target_val
+            return val in target_val
         
         return False

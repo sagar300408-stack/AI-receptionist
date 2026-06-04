@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.api import api_router
 from app.services.event_store_listener import register_db_event_listener
+from app.services.opportunity import register_opportunity_listeners
 
 # Configure Logging
 logging.basicConfig(
@@ -35,6 +36,7 @@ async def on_startup():
     
     # 1. Register domain event bus subscribers
     register_db_event_listener()
+    register_opportunity_listeners()
     
     # 2. Build local database schema asynchronously on startup
     from app.core.database import engine, Base
@@ -46,6 +48,16 @@ async def on_startup():
     from app.models.question import QuestionTemplateORM
     from app.models.event import SessionEventORM
     from app.models.context import BusinessContextORM
+    from app.models.opportunity import (
+        OpportunityGroupORM, OpportunityTemplateORM, OpportunityRuleORM,
+        ScoringProfileORM, OpportunityEvaluationORM, OpportunityResultORM,
+        OpportunityEvidenceORM
+    )
+    from app.models.report import (
+        ReportTemplateORM, BusinessReportORM, ReportVersionORM,
+        ReportNarrativeEvidenceORM, QualificationResultORM,
+        BusinessHealthAssessmentORM, ConsultationRecommendationORM
+    )
 
     async with engine.begin() as conn:
         logger.info("Creating database tables if not existing...")
