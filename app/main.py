@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.api.v1.api import api_router
 from app.services.event_store_listener import register_db_event_listener
 from app.services.opportunity import register_opportunity_listeners
+from app.services.report_service import register_report_listeners
 
 # Configure Logging
 logging.basicConfig(
@@ -37,6 +38,7 @@ async def on_startup():
     # 1. Register domain event bus subscribers
     register_db_event_listener()
     register_opportunity_listeners()
+    register_report_listeners()
     
     # 2. Build local database schema asynchronously on startup
     from app.core.database import engine, Base
