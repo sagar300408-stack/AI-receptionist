@@ -11,6 +11,10 @@ class ProgressStateSchema(BaseModel):
     pending_keys: List[str]
     current_key: Optional[str] = None
 
+    class Config:
+        from_attributes = True
+
+
 class SessionResponse(BaseModel):
     id: UUID
     session_token: str
