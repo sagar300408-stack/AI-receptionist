@@ -15,9 +15,16 @@ from app.models.opportunity import (
 )
 from scripts.seed_questions import seed_data
 from scripts.seed_opportunities import seed_opportunities
+from scripts.seed_constraints import seed_constraints
+from scripts.seed_applicability import seed_applicability
+from scripts.seed_solutions import seed_solutions
 from app.services.session import SessionService
+from app.services.constraint_classifier import register_constraint_listeners
+from app.services.applicability_engine import register_applicability_listeners
+from app.services.solution_recommendation_engine import register_solution_listeners
 from app.services.opportunity import register_opportunity_listeners
 from app.services.event_store_listener import register_db_event_listener
+
 
 # Configure Logger
 logging.basicConfig(level=logging.INFO)
@@ -37,11 +44,22 @@ async def run_opportunities_verification():
 
     # 2. Run Seed Scripts
     await seed_data()
+    await seed_constraints()
+    await seed_applicability()
+    await seed_solutions()
     await seed_opportunities()
-    logger.info("Questions and Opportunity catalogs seeded.")
+    logger.info("Questions, Constraints, Applicability, Solutions, and Opportunity catalogs seeded.")
 
     # 3. Register Event Listeners
+    # Clear existing listeners first to avoid duplicate handler calls
+    from app.services.event_bus import event_bus
+    event_bus._listeners = {}
+    event_bus._global_listeners = []
+
     register_db_event_listener()
+    register_constraint_listeners()
+    register_applicability_listeners()
+    register_solution_listeners()
     register_opportunity_listeners()
     logger.info("Domain Event Bus listeners registered.")
 
@@ -154,14 +172,14 @@ async def run_opportunities_verification():
         evidence_fields = [e.field for e in evidences]
         logger.info(f"AI Receptionist audit evidence traces saved: {evidence_fields}")
         
-        assert "monthly_leads" in evidence_fields
-        assert "communication_channels" in evidence_fields
+        assert "CUSTOMER_SUPPORT_severity" in evidence_fields
+        assert "CUSTOMER_SUPPORT_confidence" in evidence_fields
         
         # Check specific values
-        leads_evidence = [e for e in evidences if e.field == "monthly_leads"][0]
-        assert leads_evidence.value == 600, f"Expected leads value 600, got {leads_evidence.value}"
-        assert leads_evidence.operator == "gt"
-        assert leads_evidence.rule_expression == "monthly_leads gt 300"
+        severity_evidence = [e for e in evidences if e.field == "CUSTOMER_SUPPORT_severity"][0]
+        assert severity_evidence.value == "HIGH", f"Expected severity HIGH, got {severity_evidence.value}"
+        assert severity_evidence.operator == "in"
+        assert severity_evidence.rule_expression == "CUSTOMER_SUPPORT_severity in ['HIGH', 'CRITICAL']"
 
         # E. Verify event bus logs
         event_res = await db.execute(select(SessionEventORM).where(SessionEventORM.session_id == session.id))

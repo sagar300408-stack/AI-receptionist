@@ -52,3 +52,39 @@ class LeadCapturedEvent(TviraDomainEvent):
             session_id=session_id,
             payload={"lead_name": name, "lead_email": email, "lead_phone": phone}
         )
+
+class ConstraintsIdentifiedEvent(TviraDomainEvent):
+    def __init__(self, session_id: UUID, business_profile_id: UUID, constraints: list, timestamp: datetime):
+        super().__init__(
+            event_type="CONSTRAINTS_IDENTIFIED",
+            session_id=session_id,
+            payload={
+                "business_profile_id": str(business_profile_id),
+                "constraints": constraints
+            },
+            timestamp=timestamp
+        )
+
+class ApplicabilityAnalyzedEvent(TviraDomainEvent):
+    def __init__(self, session_id: UUID, applicability_results: list, timestamp: datetime):
+        super().__init__(
+            event_type="APPLICABILITY_ANALYZED",
+            session_id=session_id,
+            payload={
+                "applicability_results": applicability_results
+            },
+            timestamp=timestamp
+        )
+
+class SolutionsRecommendedEvent(TviraDomainEvent):
+    def __init__(self, session_id: UUID, recommended_solutions: list, timestamp: datetime):
+        super().__init__(
+            event_type="SOLUTIONS_RECOMMENDED",
+            session_id=session_id,
+            payload={
+                "recommended_solutions": recommended_solutions
+            },
+            timestamp=timestamp
+        )
+
+

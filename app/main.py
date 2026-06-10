@@ -4,6 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.api import api_router
 from app.services.event_store_listener import register_db_event_listener
+from app.services.constraint_classifier import register_constraint_listeners
+from app.services.applicability_engine import register_applicability_listeners
+from app.services.solution_recommendation_engine import register_solution_listeners
 from app.services.opportunity import register_opportunity_listeners
 from app.services.report_service import register_report_listeners
 
@@ -37,6 +40,9 @@ async def on_startup():
     
     # 1. Register domain event bus subscribers
     register_db_event_listener()
+    register_constraint_listeners()
+    register_applicability_listeners()
+    register_solution_listeners()
     register_opportunity_listeners()
     register_report_listeners()
     
@@ -60,6 +66,9 @@ async def on_startup():
         ReportNarrativeEvidenceORM, QualificationResultORM,
         BusinessHealthAssessmentORM, ConsultationRecommendationORM
     )
+    from app.models.constraint import ConstraintRuleORM, ConstraintORM
+    from app.models.applicability import ApplicabilityRuleORM, AIApplicabilityORM, ReviewQueueORM
+    from app.models.solution import SolutionCatalogORM, RecommendedSolutionORM
 
     async with engine.begin() as conn:
         logger.info("Creating database tables if not existing...")

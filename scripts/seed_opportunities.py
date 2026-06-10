@@ -38,25 +38,25 @@ TEMPLATES = [
         "rules": [
             {
                 "rule_type": "ELIGIBILITY",
-                "conditions": {"field": "monthly_leads", "operator": "gt", "value": 100},
+                "conditions": {"field": "AI_RECEPTIONIST", "operator": "eq", "value": True},
                 "modifier_value": None,
                 "explanation_template": None
             },
             {
                 "rule_type": "REASONING",
-                "conditions": {"field": "monthly_leads", "operator": "gt", "value": 300},
+                "conditions": {"field": "CUSTOMER_SUPPORT_severity", "operator": "in", "value": ["HIGH", "CRITICAL"]},
                 "modifier_value": None,
                 "explanation_template": "High inquiry volume ({monthly_leads} leads/month) results in slow manual response times."
             },
             {
                 "rule_type": "REASONING",
-                "conditions": {"field": "communication_channels", "operator": "contains", "value": "WhatsApp"},
+                "conditions": {"field": "CUSTOMER_SUPPORT_confidence", "operator": "gt", "value": 70},
                 "modifier_value": None,
                 "explanation_template": "Customers reach out via WhatsApp, requiring continuous manual tracking."
             },
             {
                 "rule_type": "IMPACT_MODIFIER",
-                "conditions": {"field": "pain_points", "operator": "contains", "value": "Delayed followups"},
+                "conditions": {"field": "CUSTOMER_SUPPORT_severity", "operator": "eq", "value": "HIGH"},
                 "modifier_value": 15.0,
                 "explanation_template": None
             }
@@ -73,25 +73,25 @@ TEMPLATES = [
         "rules": [
             {
                 "rule_type": "ELIGIBILITY",
-                "conditions": {"field": "team_size", "operator": "gt", "value": 2},
+                "conditions": {"field": "CRM_AUTOMATION", "operator": "eq", "value": True},
                 "modifier_value": None,
                 "explanation_template": None
             },
             {
                 "rule_type": "REASONING",
-                "conditions": {"field": "team_size", "operator": "gt", "value": 5},
+                "conditions": {"field": "LEAD_QUALIFICATION_severity", "operator": "in", "value": ["HIGH", "CRITICAL"]},
                 "modifier_value": None,
                 "explanation_template": "Friction in manually coordinating assignments across {team_size} team members."
             },
             {
                 "rule_type": "REASONING",
-                "conditions": {"field": "pain_points", "operator": "contains", "value": "Admissions are tracked on spreadsheets"},
+                "conditions": {"field": "LEAD_QUALIFICATION_confidence", "operator": "gt", "value": 70},
                 "modifier_value": None,
                 "explanation_template": "Using manual spreadsheets for tracking leads leads to data leakage and poor auditing."
             },
             {
                 "rule_type": "IMPACT_MODIFIER",
-                "conditions": {"field": "lead_volume_tier", "operator": "eq", "value": "HIGH"},
+                "conditions": {"field": "LEAD_QUALIFICATION_severity", "operator": "eq", "value": "HIGH"},
                 "modifier_value": 20.0,
                 "explanation_template": None
             }
@@ -108,19 +108,19 @@ TEMPLATES = [
         "rules": [
             {
                 "rule_type": "ELIGIBILITY",
-                "conditions": {"field": "monthly_customers", "operator": "gt", "value": 50},
+                "conditions": {"field": "APPOINTMENT_SCHEDULING", "operator": "eq", "value": True},
                 "modifier_value": None,
                 "explanation_template": None
             },
             {
                 "rule_type": "REASONING",
-                "conditions": {"field": "monthly_customers", "operator": "gt", "value": 100},
+                "conditions": {"field": "SCHEDULING_severity", "operator": "in", "value": ["HIGH", "CRITICAL", "MEDIUM"]},
                 "modifier_value": None,
                 "explanation_template": "A high volume of monthly transactions ({monthly_customers} customers) increases schedule coordination overhead."
             },
             {
                 "rule_type": "IMPACT_MODIFIER",
-                "conditions": {"field": "pain_points", "operator": "contains", "value": "Scheduling visits"},
+                "conditions": {"field": "SCHEDULING_severity", "operator": "eq", "value": "HIGH"},
                 "modifier_value": 25.0,
                 "explanation_template": None
             }

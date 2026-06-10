@@ -22,12 +22,19 @@ from app.models.report import (
 )
 from scripts.seed_questions import seed_data
 from scripts.seed_opportunities import seed_opportunities
+from scripts.seed_constraints import seed_constraints
+from scripts.seed_applicability import seed_applicability
+from scripts.seed_solutions import seed_solutions
 from scripts.seed_reports import seed_reports
 from app.services.session import SessionService
 from app.services.report_service import ReportService, register_report_listeners
+from app.services.constraint_classifier import register_constraint_listeners
+from app.services.applicability_engine import register_applicability_listeners
+from app.services.solution_recommendation_engine import register_solution_listeners
 from app.services.opportunity import register_opportunity_listeners
 from app.services.event_store_listener import register_db_event_listener
 from app.main import app
+
 
 # Configure Logger
 logging.basicConfig(level=logging.INFO)
@@ -105,9 +112,12 @@ async def run_report_verification():
 
     # 2. Run Seed Scripts
     await seed_data()
+    await seed_constraints()
+    await seed_applicability()
+    await seed_solutions()
     await seed_opportunities()
     await seed_reports()
-    logger.info("Questions, Opportunity catalogs, and Report templates seeded.")
+    logger.info("Questions, Constraints, Applicability, Solutions, Opportunity catalogs, and Report templates seeded.")
 
     # Seed the strategic project template to ensure we have a strategic project quadrant item
     async with SessionLocal() as db:
@@ -119,6 +129,9 @@ async def run_report_verification():
     event_bus._global_listeners = []
 
     register_db_event_listener()
+    register_constraint_listeners()
+    register_applicability_listeners()
+    register_solution_listeners()
     register_opportunity_listeners()
     register_report_listeners()
     logger.info("Domain Event Bus listeners registered.")
