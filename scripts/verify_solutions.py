@@ -26,6 +26,7 @@ from app.services.session import SessionService
 from app.services.constraint_classifier import register_constraint_listeners
 from app.services.applicability_engine import register_applicability_listeners
 from app.services.solution_recommendation_engine import register_solution_listeners
+from app.services.founder_review_engine import register_founder_review_listeners
 from app.services.opportunity import register_opportunity_listeners
 from app.services.report_service import register_report_listeners
 from app.services.event_store_listener import register_db_event_listener
@@ -65,6 +66,7 @@ async def run_solutions_verification():
     register_constraint_listeners()
     register_applicability_listeners()
     register_solution_listeners()
+    register_founder_review_listeners()
     register_opportunity_listeners()
     register_report_listeners()
     logger.info("Domain Event Bus listeners registered.")
@@ -115,6 +117,11 @@ async def run_solutions_verification():
         session, profile = await service.complete_session(db, session.id)
         assert session.status.value == "PROFILE_GENERATED"
         logger.info("Discovery session sealed. Cascaded calculations finished.")
+
+        # Approve review session to trigger opportunity evaluations
+        from app.services.founder_review_engine import FounderReviewEngine
+        review_engine = FounderReviewEngine()
+        await review_engine.approve_all_reviews_for_session(db, session.id)
 
     # Allow async tasks to fully execute and settle database writes
     await asyncio.sleep(0.5)
@@ -175,7 +182,8 @@ async def run_solutions_verification():
         rep_res = await db.execute(select(BusinessReportORM).where(BusinessReportORM.session_id == session.id))
         report = rep_res.scalars().first()
         assert report is not None, "Report should still be generated successfully."
-        logger.info(f"Business Report verified: ID={report.id}, Lead Grade={report.lead_grade}")
+        logger.info(f"Business Report verified: ID={report.id}")
+
 
     # --- Step E: Verify API Layer Contracts ---
     logger.info("--- Step E: Verifying API layer contracts ---")

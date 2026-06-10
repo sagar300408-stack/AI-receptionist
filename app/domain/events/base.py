@@ -87,4 +87,70 @@ class SolutionsRecommendedEvent(TviraDomainEvent):
             timestamp=timestamp
         )
 
+class ReviewApprovedEvent(TviraDomainEvent):
+    def __init__(self, session_id: UUID, review_id: UUID, recommendation_id: UUID, payload: dict, timestamp: datetime):
+        super().__init__(
+            event_type="REVIEW_APPROVED",
+            session_id=session_id,
+            payload={
+                "review_id": str(review_id),
+                "recommendation_id": str(recommendation_id),
+                **payload
+            },
+            timestamp=timestamp
+        )
+
+class ReviewRejectedEvent(TviraDomainEvent):
+    def __init__(self, session_id: UUID, review_id: UUID, recommendation_id: UUID, payload: dict, timestamp: datetime):
+        super().__init__(
+            event_type="REVIEW_REJECTED",
+            session_id=session_id,
+            payload={
+                "review_id": str(review_id),
+                "recommendation_id": str(recommendation_id),
+                **payload
+            },
+            timestamp=timestamp
+        )
+
+class ReviewNeedsResearchEvent(TviraDomainEvent):
+    def __init__(self, session_id: UUID, review_id: UUID, recommendation_id: UUID, payload: dict, timestamp: datetime):
+        super().__init__(
+            event_type="REVIEW_NEEDS_RESEARCH",
+            session_id=session_id,
+            payload={
+                "review_id": str(review_id),
+                "recommendation_id": str(recommendation_id),
+                **payload
+            },
+            timestamp=timestamp
+        )
+
+class ReviewArchivedEvent(TviraDomainEvent):
+    def __init__(self, session_id: UUID, review_id: UUID, recommendation_id: UUID, payload: dict, timestamp: datetime):
+        super().__init__(
+            event_type="REVIEW_ARCHIVED",
+            session_id=session_id,
+            payload={
+                "review_id": str(review_id),
+                "recommendation_id": str(recommendation_id),
+                **payload
+            },
+            timestamp=timestamp
+        )
+
+class ReviewCompletedEvent(TviraDomainEvent):
+    def __init__(self, session_id: UUID, review_session_id: UUID, reviewer: str, approved_count: int, timestamp: datetime):
+        super().__init__(
+            event_type="REVIEW_COMPLETED",
+            session_id=session_id,
+            payload={
+                "review_session_id": str(review_session_id),
+                "reviewer": reviewer,
+                "approved_count": approved_count
+            },
+            timestamp=timestamp
+        )
+
+
 

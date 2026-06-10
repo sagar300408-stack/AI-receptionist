@@ -106,17 +106,24 @@ class OpportunityEngine:
                 context_facts[f"{c_cat}_applicability_score"] = a.applicability_score
                 context_facts[f"{c_cat}_applicability_confidence"] = a.confidence
 
-        # Fetch Recommended Solutions for this session to populate context_facts
+        # Fetch APPROVED Recommended Solutions and their Founder Review details to populate context_facts
         from app.models.solution import RecommendedSolutionORM
-        sol_query = select(RecommendedSolutionORM).where(RecommendedSolutionORM.session_id == session_id)
+        from app.models.review import FounderReviewORM
+        sol_query = select(RecommendedSolutionORM, FounderReviewORM).join(
+            FounderReviewORM, RecommendedSolutionORM.id == FounderReviewORM.recommendation_id
+        ).where(
+            RecommendedSolutionORM.session_id == session_id,
+            FounderReviewORM.review_status == "APPROVED"
+        )
         sol_result = await db.execute(sol_query)
-        solutions = list(sol_result.scalars().all())
+        solutions_rows = list(sol_result.all())
 
-        for s in solutions:
-            context_facts[s.solution_type] = True
-            context_facts[f"{s.solution_type}_priority"] = s.priority_score
-            context_facts[f"{s.solution_type}_confidence"] = s.confidence
-            context_facts[f"{s.solution_type}_reasoning"] = s.reasoning
+        for s_orm, r_orm in solutions_rows:
+            context_facts[s_orm.solution_type] = True
+            p_score = r_orm.priority_score if r_orm.priority_score is not None else s_orm.priority_score
+            context_facts[f"{s_orm.solution_type}_priority"] = p_score
+            context_facts[f"{s_orm.solution_type}_confidence"] = s_orm.confidence
+            context_facts[f"{s_orm.solution_type}_reasoning"] = s_orm.reasoning
 
         # 3. Load Active Scoring Profile
         sp_query = select(ScoringProfileORM).where(ScoringProfileORM.active == True)
@@ -281,13 +288,13 @@ class OpportunityEngine:
 
         return evaluation_orm
 
-# Event listener mapping SOLUTIONS_RECOMMENDED to Segment 2
-async def on_solutions_recommended_listener(event: TviraDomainEvent):
+# Event listener mapping REVIEW_COMPLETED to Segment 2
+async def on_review_completed_listener(event: TviraDomainEvent):
     """Asynchronous subscriber caught on the Event Bus to decouple logic runs."""
-    if event.event_type != "SOLUTIONS_RECOMMENDED":
+    if event.event_type != "REVIEW_COMPLETED":
         return
 
-    logger.info(f"Event subscriber intercepting SOLUTIONS_RECOMMENDED event for session: {event.session_id}")
+    logger.info(f"Event subscriber intercepting REVIEW_COMPLETED event for session: {event.session_id}")
     
     # Instantiate async db connection
     async with SessionLocal() as db:
@@ -295,8 +302,9 @@ async def on_solutions_recommended_listener(event: TviraDomainEvent):
             engine = OpportunityEngine()
             await engine.evaluate_session_opportunities(db, event.session_id)
         except Exception as e:
-            logger.error(f"Async opportunity calculation failed for session {event.session_id}: {e}")
+            logger.error(f"Async opportunity calculation failed on REVIEW_COMPLETED for session {event.session_id}: {e}")
 
 def register_opportunity_listeners():
     """Binds event subscribers to the domain Event Bus."""
-    event_bus.subscribe("SOLUTIONS_RECOMMENDED", on_solutions_recommended_listener)
+    event_bus.subscribe("REVIEW_COMPLETED", on_review_completed_listener)
+

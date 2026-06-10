@@ -16,8 +16,13 @@ from app.models.opportunity import OpportunityEvaluationORM, OpportunityResultOR
 from scripts.seed_questions import seed_data
 from scripts.seed_opportunities import seed_opportunities
 from scripts.seed_constraints import seed_constraints
+from scripts.seed_applicability import seed_applicability
+from scripts.seed_solutions import seed_solutions
 from app.services.session import SessionService
 from app.services.constraint_classifier import register_constraint_listeners
+from app.services.applicability_engine import register_applicability_listeners
+from app.services.solution_recommendation_engine import register_solution_listeners
+from app.services.founder_review_engine import register_founder_review_listeners
 from app.services.opportunity import register_opportunity_listeners
 from app.services.event_store_listener import register_db_event_listener
 from app.main import app
@@ -41,6 +46,8 @@ async def run_constraints_verification():
     # 2. Run Seed Scripts
     await seed_data()
     await seed_constraints()
+    await seed_applicability()
+    await seed_solutions()
     await seed_opportunities()
     logger.info("Questions, Constraint rules, and Opportunity catalogs seeded.")
 
@@ -51,6 +58,9 @@ async def run_constraints_verification():
 
     register_db_event_listener()
     register_constraint_listeners()
+    register_applicability_listeners()
+    register_solution_listeners()
+    register_founder_review_listeners()
     register_opportunity_listeners()
     logger.info("Domain Event Bus listeners registered.")
 
@@ -100,6 +110,11 @@ async def run_constraints_verification():
         session1, profile1 = await service.complete_session(db, session1.id)
         assert session1.status.value == "PROFILE_GENERATED"
         logger.info("Discovery session sealed. Cascaded calculations finished.")
+
+        # Approve review session to trigger opportunity evaluations
+        from app.services.founder_review_engine import FounderReviewEngine
+        review_engine = FounderReviewEngine()
+        await review_engine.approve_all_reviews_for_session(db, session1.id)
 
     # Allow async tasks to fully execute and settle database writes
     await asyncio.sleep(0.5)

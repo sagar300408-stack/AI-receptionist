@@ -7,6 +7,7 @@ from app.services.event_store_listener import register_db_event_listener
 from app.services.constraint_classifier import register_constraint_listeners
 from app.services.applicability_engine import register_applicability_listeners
 from app.services.solution_recommendation_engine import register_solution_listeners
+from app.services.founder_review_engine import register_founder_review_listeners
 from app.services.opportunity import register_opportunity_listeners
 from app.services.report_service import register_report_listeners
 
@@ -43,6 +44,7 @@ async def on_startup():
     register_constraint_listeners()
     register_applicability_listeners()
     register_solution_listeners()
+    register_founder_review_listeners()
     register_opportunity_listeners()
     register_report_listeners()
     
@@ -69,6 +71,7 @@ async def on_startup():
     from app.models.constraint import ConstraintRuleORM, ConstraintORM
     from app.models.applicability import ApplicabilityRuleORM, AIApplicabilityORM, ReviewQueueORM
     from app.models.solution import SolutionCatalogORM, RecommendedSolutionORM
+    from app.models.review import ReviewSessionORM, FounderReviewORM, FounderFeedbackORM, ReviewAuditLogORM
 
     async with engine.begin() as conn:
         logger.info("Creating database tables if not existing...")
